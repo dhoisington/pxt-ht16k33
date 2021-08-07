@@ -56,28 +56,46 @@ namespace ht16k33 {
         )
     }
 
-    //% blockId="HT16K33_RENDER_BITMAP" block="render bitmap %bitmap"
-    export function render(bitmap: number[]) {
-        const formattedBitmap = formatBimap(bitmap)
-        const buff = pins.createBufferFromArray(formattedBitmap);
-        pins.i2cWriteBuffer(matrixAddress, buff, false);
+    //% blockId="HT16K33_DISPLAY_NUMBER" block="render bitmap %bitmap"
+    export function render(num: number) {
+        let convertNumbers = [63, 6, 91, 79, 102, 109, 125, 7, 127, 111]
+        let list = [0, 63, 255, 63, 255, 0, 0, 63, 255, 63]
+        let formattedArray: number[] = []
+        textOfNumber = convertToText(num)
+        if (textOfNumber.indexOf(".") == -1) {
+            textOfNumber = "" + textOfNumber + "."
+        }
+        formattedArray[0] = parseFloat(textOfNumber.charAt(textOfNumber.indexOf(".") - 2))
+        formattedArray[1] = parseFloat(textOfNumber.charAt(textOfNumber.indexOf(".") - 1))
+        formattedArray[2] = parseFloat(textOfNumber.charAt(textOfNumber.indexOf(".") + 1))
+        formattedArray[3] = parseFloat(textOfNumber.charAt(textOfNumber.indexOf(".") + 2))
+        console.log("This" + formattedArray[1] + textOfNumber.charAt(1))
+        if (formattedArray[0] > 0) {
+            list[1] = convertNumbers[formattedArray[0]]
+        } else {
+            list[1] = 0
+        }
+        if (formattedArray[1] > 0) {
+            list[3] = convertNumbers[formattedArray[1]] + 128
+        } else {
+            list[3] = 191
+        }
+        if (formattedArray[2] > 0) {
+            list[7] = convertNumbers[formattedArray[2]]
+        } else {
+            list[7] = 63
+        }
+        if (formattedArray[3] > 0) {
+            list[9] = convertNumbers[formattedArray[3]]
+        } else {
+            list[9] = 0
+        }
+        let buff = pins.createBufferFromArray(list);
+    pins.i2cWriteBuffer(matrixAddress, buff, false);
     }
+    
 
-    function rotate(value: number) {
-        return (value >> 1) | (value << 7);
-    }
-
-    function formatBimap(bitmap: Array<number>) {
-        const formattedBitmap: Array<number> = [0];
-
-        bitmap.forEach(function (i) {
-            formattedBitmap.push(rotate(i));
-            //Since the 8x8 Matrix chip can render on an 16x8 screen we have to write an empty byte
-            formattedBitmap.push(0);
-        });
-
-        return formattedBitmap;
-    }
+   
 
     function initializeDisplay() {
         /** 
